@@ -22,27 +22,34 @@ class RAGPipeline:
         # Check for environment variable first
         bearer_token = os.getenv('AWS_BEARER_TOKEN_BEDROCK')
         
-        # If not set, prompt user
+        # If not set, try interactive prompt only if we have a terminal
         if not bearer_token:
-            bearer_token = getpass.getpass("Enter AWS Bedrock Bearer Token: ")
+            if os.isatty(0):  # Check if we have a terminal
+                bearer_token = getpass.getpass("Enter AWS Bedrock Bearer Token: ")
+            else:
+                raise ValueError("AWS_BEARER_TOKEN_BEDROCK environment variable is required when running in Docker/non-interactive mode")
         
         # Set environment variable for boto3 to use
         os.environ['AWS_BEARER_TOKEN_BEDROCK'] = bearer_token
         
         # Initialize Bedrock client (uses bearer token from environment)
         self.client = boto3.client("bedrock-runtime", region_name="us-east-1")
-        self.model = 'us.anthropic.claude-3-5-sonnet-20241022-v2:0'
+        self.model = 'amazon.nova-micro-v1:0'
         print("Initialized Bedrock client with bearer token")
     
     def _setup_openai(self):
         """Setup OpenAI credentials and client"""
         api_key = os.getenv('OPENAI_API_KEY')
         
+        # If not set, try interactive prompt only if we have a terminal
         if not api_key:
-            api_key = getpass.getpass("Enter OpenAI API Key: ")
+            if os.isatty(0):  # Check if we have a terminal
+                api_key = getpass.getpass("Enter OpenAI API Key: ")
+            else:
+                raise ValueError("OPENAI_API_KEY environment variable is required when running in Docker/non-interactive mode")
         
         self.client = openai.OpenAI(api_key=api_key)
-        self.model = 'gpt-3.5-turbo'
+        self.model = 'gpt-4.1-nano-2025-04-14'
         print("Initialized OpenAI client")
 
     def search(self, query):
@@ -98,7 +105,7 @@ tags: {tags}
     def _call_bedrock(self, prompt):
         """Call AWS Bedrock LLM"""
         messages = [{"role": "user", "content": [{"text": prompt}]}]
-        inference_config = {"temperature": 0.1, "topP": 0.9}
+        inference_config = {"temperature": 0.4, "topP": 0.5}
 
         try:
             response = self.client.converse(
@@ -117,7 +124,7 @@ tags: {tags}
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.1,
+                temperature=0.3,
                 max_tokens=1000
             )
             return response.choices[0].message.content
@@ -135,12 +142,3 @@ tags: {tags}
         except Exception as e:
             print(f"RAG pipeline error: {e}")
             return f"Error processing query: {str(e)}"
-    
-    def debug_search(self, query):
-        """Debug search results"""
-        results = self.search(query)
-        print(f"Query: {query}")
-        print(f"Number of results: {len(results)}")
-        for i, doc in enumerate(results):
-            print(f"Result {i+1}: {doc}")
-        return results

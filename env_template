@@ -1,0 +1,5 @@
+# AWS Bedrock Token (replace with your actual token)
+AWS_BEARER_TOKEN_BEDROCK=your_bedrock_token_here
+
+# OpenAI API Key (replace with your actual key)  
+OPENAI_API_KEY=your_openai_api_key_here

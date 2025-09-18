@@ -23,6 +23,7 @@ def handle_question():
         "answer": answer,
     }
 
+    app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
     return jsonify(result)
 
 @app.route("/feedback", methods=["POST"])
@@ -37,7 +38,12 @@ def handle_feedback():
     result = {
         "message": f"Feedback received for conversation {conversation_id}: {feedback}"
     }
+    app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
     return jsonify(result)
+
+@app.route("/health", methods=["GET"])
+def health_check():
+    return jsonify({"status": "healthy", "provider": rag_pipeline.provider})
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='RAG Pipeline Server')
@@ -46,4 +52,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     rag_pipeline = RAGPipeline(provider=args.provider)  # Create instance
-    app.run(debug=True)
+    app.run(debug=False, host='0.0.0.0', port=5000)  # Changed for Docker

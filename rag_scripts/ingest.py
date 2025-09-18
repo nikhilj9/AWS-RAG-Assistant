@@ -1,5 +1,4 @@
 import pandas as pd
-
 import minsearch
 
 def load_index():

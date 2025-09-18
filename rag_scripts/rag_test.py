@@ -74,7 +74,6 @@ df_test = df_question[100:]
 
 gt_val = df_validation.to_dict(orient='records')
 
-
 def minsearch_search(query, boost=None):
     if boost is None:
         boost = {}
@@ -151,7 +150,30 @@ df_test = df_question[100:]
 
 gt_val = df_validation.to_dict(orient='records')
 
-def elastic_search(query, boost=None):
+from elasticsearch import Elasticsearch
+es_client = Elasticsearch('http://localhost:9200') 
+
+index_settings = {
+    "settings": {
+        "number_of_shards": 1,
+        "number_of_replicas": 0
+    },
+    "mappings": {
+        "properties": {
+            "service": {"type": "text"},
+            "category": {"type": "text"},
+            "title": {"type": "text"},
+            "content": {"type": "text"},
+            "tags": {"type": "keyword"}
+        }
+    }
+}
+
+index_name = "bedrock_knowledge_base"
+
+es_client.indices.create(index=index_name, body=index_settings)
+
+def elastic_search(query, boost=None, es_client=None, index_name=None):
     if boost is None:
         boost = {'category': 3.0, 'title': 2.0, 'content': 1.0, 'tags': 3.0}
 
@@ -208,7 +230,7 @@ def optuna_objective(trial):
         boost[name] = trial.suggest_uniform(name, low, high)
 
     def search_function(q):
-        return elastic_search(q['question'], boost)
+        return elastic_search(q['question'], boost, es_client)
 
     results = evaluate(gt_val, search_function)
 
