@@ -1,0 +1,13 @@
+boto3
+scikit-learn
+pandas
+fastapi
+tqdm
+notebook==7.1.2
+ipywidgets
+elasticsearch==8.15.1
+qdrant-client[fastembed]>=1.14.2
+huggingface_hub[hf_xet]
+flask
+python-dotenv
+openai
